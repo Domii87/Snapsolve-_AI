@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="manifest" href="manifest.json">
+    <title>Snapsolve AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior: none; 
+            background-color: #0f172a; 
+        }
+        .accent-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); }
+        .card-glass { 
+            background: rgba(30, 41, 59, 0.5); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+    </style>
+</head>
+<body class="text-slate-100 overflow-x-hidden">
+
+    <div id="app" class="min-h-screen flex flex-col max-w-md mx-auto relative overflow-hidden shadow-2xl">
+        
+        <!-- Header -->
+        <nav class="p-5 flex items-center justify-between sticky top-0 z-50 bg-[#0f172a]/80 backdrop-blur-md border-b border-white/5">
+            <div class="flex items-center gap-3">
+                <div class="accent-gradient p-2.5 rounded-2xl shadow-lg">
+                    <i data-lucide="sparkles" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white uppercase leading-none">Snapsolve</h1>
+                    <span class="text-[10px] font-bold text-violet-400 tracking-[0.2em] uppercase">AI Assistant</span>
+                </div>
+            </div>
+            <button onclick="location.reload()" class="p-2 bg-white/5 rounded-full"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+        </nav>
+
+        <main class="flex-1 p-6 pb-32">
+            <!-- Start -->
+            <div id="home-view" class="py-12 flex flex-col items-center text-center space-y-12">
+                <div class="relative animate-float">
+                    <div class="absolute -inset-20 bg-violet-600 rounded-full blur-[120px] opacity-20"></div>
+                    <div class="card-glass p-12 rounded-[3.5rem] relative border-violet-500/20">
+                        <i data-lucide="brain-circuit" class="text-violet-400 w-24 h-24"></i>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h2 class="text-4xl font-extrabold text-white tracking-tight leading-tight">Hausaufgaben?<br><span class="text-transparent bg-clip-text accent-gradient">Ganz einfach!</span></h2>
+                    <p class="text-slate-400 text-lg px-2">Fotografiere deine Aufgabe und ich löse sie mit dir gemeinsam.</p>
+                </div>
+                <button onclick="ui.startCamera()" class="w-full accent-gradient py-6 rounded-3xl font-extrabold text-xl text-white shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all">
+                    <i data-lucide="camera" class="w-8 h-8"></i> JETZT SCANNEN
+                </button>
+            </div>
+
+            <!-- Kamera -->
+            <div id="camera-view" class="hidden relative rounded-[3rem] overflow-hidden bg-black aspect-[3/4] border-2 border-violet-500/30">
+                <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute inset-x-0 bottom-10 flex flex-col items-center gap-8 px-10">
+                    <div class="flex items-center gap-6 w-full">
+                        <button onclick="ui.stopCamera()" class="bg-black/50 p-5 rounded-full backdrop-blur-xl border border-white/20 text-white"><i data-lucide="x" class="w-7 h-7"></i></button>
+                        <button onclick="ui.capture()" class="flex-1 bg-white p-6 rounded-3xl text-slate-950 font-black text-xl active:scale-95">FOTO MACHEN</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading-view" class="hidden py-32 flex flex-col items-center gap-10 text-center">
+                <div class="w-24 h-24 border-8 border-violet-500/10 border-t-violet-500 rounded-full animate-spin"></div>
+                <p class="text-violet-400 font-extrabold text-2xl animate-pulse uppercase tracking-widest">KI denkt nach...</p>
+            </div>
+
+            <!-- Result -->
+            <div id="result-view" class="hidden space-y-6 pb-12">
+                <img id="preview-img" class="w-full rounded-[2.5rem] h-56 object-cover border-4 border-slate-800 shadow-2xl">
+                <div class="card-glass rounded-[2.5rem] p-8">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <h3 class="text-violet-400 font-extrabold text-xl uppercase tracking-tight">Deine Lösung</h3>
+                        <button onclick="ui.speak()" class="p-4 bg-violet-600 text-white rounded-2xl shadow-lg active:scale-90"><i data-lucide="volume-2" class="w-6 h-6"></i></button>
+                    </div>
+                    <div id="result-text" class="text-slate-200 leading-relaxed text-lg font-medium whitespace-pre-wrap"></div>
+                </div>
+                <button onclick="ui.startCamera()" class="w-full bg-white/5 py-6 rounded-3xl font-extrabold text-lg text-slate-300 border border-white/10 flex items-center justify-center gap-3 active:scale-95">
+                    <i data-lucide="rotate-ccw" class="w-6 h-6"></i> NEUER SCAN
+                </button>
+            </div>
+        </main>
+
+        <!-- Bottom Nav -->
+        <div id="nav-bottom" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] card-glass rounded-[2.5rem] p-3 flex justify-around items-center z-40">
+            <button onclick="location.reload()" class="p-4 rounded-2xl bg-violet-600 text-white shadow-lg"><i data-lucide="home"></i></button>
+            <button onclick="ui.startCamera()" class="p-5 accent-gradient text-white rounded-3xl -mt-16 border-[6px] border-[#0f172a] active:scale-90 shadow-2xl"><i data-lucide="camera" class="w-9 h-9"></i></button>
+            <div class="p-4 text-slate-600"><i data-lucide="star"></i></div>
+        </div>
+    </div>
+AIzaSyC4iyudOPPKZA3IshPleP6bqbCj-A0Kp1w
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <script>
+        const apiKey = ""; 
+        const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        const ui = {
+            currentStream: null,
+            lastResult: "",
+            startCamera: async function() {
+                this.showView('camera-view');
+                try {
+                    this.currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    document.getElementById('video').srcObject = this.currentStream;
+                } catch (e) { alert("Kamera-Fehler"); this.showView('home-view'); }
+            },
+            stopCamera: function() {
+                if(this.currentStream) this.currentStream.getTracks().forEach(t => t.stop());
+                this.showView('home-view');
+            },
+            capture: function() {
+                const video = document.getElementById('video');
+                const canvas = document.getElementById('canvas');
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                document.getElementById('preview-img').src = canvas.toDataURL('image/jpeg');
+                this.stopCamera();
+                this.analyze(b64);
+            },
+            analyze: async function(base64, retry = 0) {
+                this.showView('loading-view');
+                try {
+                    const res = await fetch(ENDPOINT, {
+                        method: 'POST',
+                        body: JSON.stringify({ contents: [{ parts: [{ text: "Erkläre die Aufgabe schrittweise und motivierend auf Deutsch mit Emojis." }, { inlineData: { mimeType: "image/jpeg", data: base64 } }] }] })
+                    });
+                    const data = await res.json();
+                    this.lastResult = data.candidates?.[0]?.content?.parts?.[0]?.text || "Fehler.";
+                    document.getElementById('result-text').innerText = this.lastResult;
+                    this.showView('result-view');
+                } catch (e) {
+                    if (retry < 3) setTimeout(() => this.analyze(base64, retry + 1), 1000);
+                    else { alert("Fehler!"); this.showView('home-view'); }
+                }
+            },
+            speak: function() {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(this.lastResult);
+                u.lang = 'de-DE';
+                window.speechSynthesis.speak(u);
+            },
+            showView: function(id) {
+                ['home-view', 'camera-view', 'loading-view', 'result-view'].forEach(v => document.getElementById(v).classList.add('hidden'));
+                document.getElementById(id).classList.remove('hidden');
+                lucide.createIcons();
+            }
+        };
+        window.onload = () => lucide.createIcons();
+    </script>
+</body>
+</html>
