@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="manifest.json">
+    <title>Snapsolve AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior: none; 
+            background-color: #020617; 
+        }
+        .accent-gradient { background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); }
+        .card-glass { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="text-slate-100 overflow-x-hidden">
+
+    <div id="app" class="min-h-screen flex flex-col max-w-md mx-auto relative overflow-hidden shadow-2xl">
+        
+        <!-- Header -->
+        <nav class="p-5 flex items-center justify-between sticky top-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-white/5">
+            <div class="flex items-center gap-3">
+                <div class="accent-gradient p-2.5 rounded-2xl shadow-lg shadow-emerald-500/20">
+                    <i data-lucide="scan-line" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white uppercase leading-none">Snapsolve</h1>
+                    <span class="text-[10px] font-bold text-emerald-400 tracking-[0.2em] uppercase">AI Assistant</span>
+                </div>
+            </div>
+            <button onclick="location.reload()" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+                <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-400"></i>
+            </button>
+        </nav>
+
+        <main class="flex-1 p-6 pb-32">
+            <!-- Start-Ansicht -->
+            <div id="home-view" class="py-12 flex flex-col items-center text-center space-y-12">
+                <div class="relative animate-float">
+                    <div class="absolute -inset-16 bg-emerald-500 rounded-full blur-[100px] opacity-10"></div>
+                    <div class="card-glass p-12 rounded-[3.5rem] relative">
+                        <i data-lucide="brain-circuit" class="text-emerald-400 w-24 h-24"></i>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h2 class="text-4xl font-extrabold text-white tracking-tight leading-tight">Hausaufgaben?<br>Ganz einfach!</h2>
+                    <p class="text-slate-400 text-lg px-2">Mache ein Foto von deiner Aufgabe und ich erkläre dir die Lösung Schritt für Schritt.</p>
+                </div>
+                <button onclick="ui.startCamera()" class="w-full accent-gradient py-6 rounded-3xl font-extrabold text-xl text-white shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all">
+                    <i data-lucide="aperture" class="w-8 h-8"></i> JETZT SCANNEN
+                </button>
+            </div>
+
+            <!-- Kamera-Modus -->
+            <div id="camera-view" class="hidden relative rounded-[3rem] overflow-hidden bg-black aspect-[3/4] border-2 border-white/10 shadow-2xl">
+                <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute inset-x-0 bottom-10 flex flex-col items-center gap-8 px-10">
+                    <div class="flex items-center gap-6 w-full">
+                        <button onclick="ui.stopCamera()" class="bg-black/50 p-5 rounded-full backdrop-blur-xl border border-white/20 text-white">
+                            <i data-lucide="arrow-left" class="w-7 h-7"></i>
+                        </button>
+                        <button onclick="ui.capture()" class="flex-1 bg-white p-6 rounded-3xl text-slate-950 font-black text-xl active:scale-95 shadow-xl">
+                            FOTO ANALYSIEREN
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lade-Screen -->
+            <div id="loading-view" class="hidden py-32 flex flex-col items-center gap-10 text-center">
+                <div class="relative">
+                    <div class="w-24 h-24 border-8 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin"></div>
+                    <i data-lucide="sparkles" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-400 w-8 h-8 animate-pulse"></i>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-emerald-400 font-extrabold text-2xl animate-pulse uppercase tracking-widest">Snapsolve denkt nach...</p>
+                    <p class="text-slate-500 font-medium">Ich schaue mir deine Aufgabe genau an.</p>
+                </div>
+            </div>
+
+            <!-- Ergebnis-Anzeige -->
+            <div id="result-view" class="hidden space-y-6 pb-12">
+                <div class="relative group">
+                    <img id="preview-img" class="w-full rounded-[2.5rem] h-56 object-cover border-4 border-slate-800 shadow-2xl">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent rounded-[2.5rem]"></div>
+                </div>
+                
+                <div class="card-glass rounded-[2.5rem] p-8 shadow-2xl">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="lightbulb" class="text-emerald-400 w-6 h-6"></i>
+                            <h3 class="text-emerald-400 font-extrabold text-xl uppercase tracking-tight">Erklärung</h3>
+                        </div>
+                        <button onclick="ui.speak()" class="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg active:scale-90 hover:bg-emerald-400 transition-colors">
+                            <i data-lucide="volume-2" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                    <div id="result-text" class="text-slate-200 leading-relaxed text-lg font-medium whitespace-pre-wrap"></div>
+                </div>
+
+                <button onclick="ui.startCamera()" class="w-full bg-white/5 py-6 rounded-3xl font-extrabold text-lg text-slate-300 border border-white/10 flex items-center justify-center gap-3 active:scale-95 hover:bg-white/10 transition-all">
+                    <i data-lucide="refresh-cw" class="w-6 h-6"></i> NÄCHSTE AUFGABE
+                </button>
+            </div>
+        </main>
+
+        <!-- Bottom Menu -->
+        <div id="nav-bottom" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] card-glass rounded-[2.5rem] p-3 flex justify-around items-center z-40 shadow-2xl">
+            <button onclick="location.reload()" class="p-4 rounded-2xl bg-emerald-500 text-white shadow-lg transition-transform active:scale-90">
+                <i data-lucide="home" class="w-6 h-6"></i>
+            </button>
+            <button onclick="ui.startCamera()" class="p-5 accent-gradient text-white rounded-3xl -mt-16 border-[6px] border-[#020617] active:scale-90 transition-all shadow-2xl shadow-emerald-500/40">
+                <i data-lucide="camera" class="w-9 h-9"></i>
+            </button>
+            <div class="p-4 text-slate-500 opacity-50">
+                <i data-lucide="history" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hilfs-Elemente -->
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <script>
+        // API Konfiguration
+        const apiKey = ""; // Wird automatisch vom System eingefügt
+        const MODEL = "gemini-2.5-flash-preview-09-2025";
+        const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
+
+        const ui = {
+            currentStream: null,
+            lastResult: "",
+
+            startCamera: async function() {
+                this.showView('camera-view');
+                try {
+                    this.currentStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } 
+                    });
+                    document.getElementById('video').srcObject = this.currentStream;
+                } catch (e) { 
+                    alert("Bitte erlaube den Kamera-Zugriff in deinem Browser."); 
+                    this.showView('home-view'); 
+                }
+            },
+
+            stopCamera: function() {
+                if(this.currentStream) {
+                    this.currentStream.getTracks().forEach(track => track.stop());
+                }
+                this.showView('home-view');
+            },
+
+            capture: function() {
+                const video = document.getElementById('video');
+                const canvas = document.getElementById('canvas');
+                const context = canvas.getContext('2d');
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0);
+                
+                const base64Data = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+                document.getElementById('preview-img').src = canvas.toDataURL('image/jpeg');
+                
+                this.stopCamera();
+                this.processImage(base64Data);
+            },
+
+            processImage: async function(base64, retry = 0) {
+                this.showView('loading-view');
+                
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: "Du bist Snapsolve AI, ein freundlicher Tutor. Analysiere das Foto der Hausaufgabe. Erkläre die Lösung Schritt für Schritt, einfach und sehr motivierend für ein Schulkind auf Deutsch. Nutze viele passende Emojis und mache den Text übersichtlich." },
+                            { inlineData: { mimeType: "image/jpeg", data: base64 } }
+                        ]
+                    }]
+                };
+
+                try {
+                    const response = await fetch(ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error("API_ERROR");
+
+                    const data = await response.json();
+                    this.lastResult = data.candidates?.[0]?.content?.parts?.[0]?.text || "Ich konnte die Aufgabe leider nicht erkennen. Bitte versuche es noch einmal mit mehr Licht!";
+                    
+                    document.getElementById('result-text').innerText = this.lastResult;
+                    this.showView('result-view');
+                    
+                } catch (e) {
+                    if (retry < 3) {
+                        const wait = Math.pow(2, retry) * 1000;
+                        setTimeout(() => this.processImage(base64, retry + 1), wait);
+                    } else {
+                        alert("Verbindungsfehler zur KI. Bitte prüfe dein Internet.");
+                        this.showView('home-view');
+                    }
+                }
+            },
+
+            speak: function() {
+                if (!this.lastResult) return;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(this.lastResult);
+                utterance.lang = 'de-DE';
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            },
+
+            showView: function(id) {
+                ['home-view', 'camera-view', 'loading-view', 'result-view'].forEach(view => {
+                    document.getElementById(view).classList.add('hidden');
+                });
+                document.getElementById(id).classList.remove('hidden');
+                lucide.createIcons();
+            }
+        };
+
+        // Initialisierung
+        window.onload = () => {
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
